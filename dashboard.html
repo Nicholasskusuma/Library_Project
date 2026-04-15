@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perpustakaan — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --card: #1e2333;
+    --border: #2a3048;
+    --accent: #4f8ef7;
+    --accent2: #e8a94d;
+    --green: #3ecf8e;
+    --red: #f76f6f;
+    --text: #e8eaf2;
+    --muted: #7a82a0;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .logo {
+    padding: 0 24px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .logo h1 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .logo p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  nav { padding: 24px 12px; flex: 1; }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 12px;
+    margin-bottom: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all .18s;
+    margin-bottom: 2px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: var(--card); color: var(--text); }
+  .nav-item.active { background: rgba(79,142,247,.15); color: var(--accent); }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 40px;
+    max-width: calc(100vw - 240px);
+  }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp .3s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .page-header h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: .07;
+    transform: translate(20px, -20px);
+  }
+
+  .stat-card.blue::before  { background: var(--accent); }
+  .stat-card.gold::before  { background: var(--accent2); }
+  .stat-card.green::before { background: var(--green); }
+
+  .stat-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+  .stat-value { font-family: var(--font-display); font-size: 36px; font-weight: 700; margin: 8px 0 4px; }
+  .stat-card.blue  .stat-value { color: var(--accent); }
+  .stat-card.gold  .stat-value { color: var(--accent2); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-sub { font-size: 12px; color: var(--muted); }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-header h3 { font-size: 15px; font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+  }
+
+  td {
+    padding: 14px 24px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(42,48,72,.5);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge-green { background: rgba(62,207,142,.12); color: var(--green); }
+  .badge-red   { background: rgba(247,111,111,.12); color: var(--red); }
+  .badge-blue  { background: rgba(79,142,247,.12);  color: var(--accent); }
+  .badge-gold  { background: rgba(232,169,77,.12);  color: var(--accent2); }
+
+  .stock-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bar-track {
+    width: 60px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .4s; }
+
+  /* FORM MODAL */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6ba0f9; transform: translateY(-1px); }
+  .btn-ghost { background: var(--border); color: var(--text); }
+  .btn-ghost:hover { background: #3a4060; }
+  .btn-danger { background: rgba(247,111,111,.15); color: var(--red); border: 1px solid rgba(247,111,111,.3); }
+  .btn-danger:hover { background: rgba(247,111,111,.25); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .overlay.open { display: flex; animation: fadeIn .2s; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 440px;
+    max-width: 90vw;
+    animation: slideUp .25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal h3 { font-family: var(--font-display); font-size: 20px; margin-bottom: 24px; }
+
+  .form-group { margin-bottom: 16px; }
+
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; letter-spacing: .5px; }
+
+  input, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red);   color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+  /* FINE highlight */
+  .fine-amount { color: var(--red); font-weight: 600; }
+  .fine-zero   { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">📚</div>
+    <h1>Perpustakaan</h1>
+    <p>Management System</p>
+  </div>
+  <nav>
+    <div class="nav-label">Menu</div>
+    <button class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">🏠</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showPage('books')">
+      <span class="icon">📖</span> Buku
+    </button>
+    <button class="nav-item" onclick="showPage('members')">
+      <span class="icon">👥</span> Anggota
+    </button>
+    <button class="nav-item" onclick="showPage('loans')">
+      <span class="icon">🔄</span> Peminjaman
+    </button>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Ringkasan sistem manajemen perpustakaan</p>
+      </div>
+      <button class="btn btn-ghost" onclick="loadAll()">↻ Refresh</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Total Buku</div>
+        <div class="stat-value" id="stat-books">—</div>
+        <div class="stat-sub">judul terdaftar</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Total Anggota</div>
+        <div class="stat-value" id="stat-members">—</div>
+        <div class="stat-sub">anggota aktif</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Peminjaman Aktif</div>
+        <div class="stat-value" id="stat-loans">—</div>
+        <div class="stat-sub">sedang dipinjam</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header"><h3>📖 Koleksi Buku Terbaru</h3></div>
+      <div id="dashboard-books"><div class="loading">Memuat data...</div></div>
+    </div>
+  </div>
+
+  <!-- BOOKS PAGE -->
+  <div class="page" id="page-books">
+    <div class="page-header">
+      <div>
+        <h2>Koleksi Buku</h2>
+        <p>Kelola seluruh koleksi perpustakaan</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-book')">+ Tambah Buku</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><h3>Semua Buku</h3></div>
+      <div id="books-table"><div class="loading">Memuat data...</div></div>
+    </div>
+  </div>
+
+  <!-- MEMBERS PAGE -->
+  <div class="page" id="page-members">
+    <div class="page-header">
+      <div>
+        <h2>Anggota</h2>
+        <p>Kelola data anggota perpustakaan</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-member')">+ Tambah Anggota</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><h3>Semua Anggota</h3></div>
+      <div id="members-table"><div class="loading">Memuat data...</div></div>
+    </div>
+  </div>
+
+  <!-- LOANS PAGE -->
+  <div class="page" id="page-loans">
+    <div class="page-header">
+      <div>
+        <h2>Peminjaman</h2>
+        <p>Catat dan kelola transaksi peminjaman</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-loan')">+ Pinjam Buku</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><h3>Riwayat Peminjaman</h3></div>
+      <div id="loans-table"><div class="loading">Memuat data...</div></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODALS -->
+
+<!-- Add Book -->
+<div class="overlay" id="modal-add-book">
+  <div class="modal">
+    <h3>Tambah Buku Baru</h3>
+    <div class="form-group"><label>JUDUL BUKU</label><input id="b-title" placeholder="Masukkan judul buku"></div>
+    <div class="form-group"><label>PENULIS</label><input id="b-author" placeholder="Nama penulis"></div>
+    <div class="form-row">
+      <div class="form-group"><label>ISBN</label><input id="b-isbn" placeholder="978..."></div>
+      <div class="form-group"><label>STOK</label><input id="b-stock" type="number" min="1" value="1"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-book')">Batal</button>
+      <button class="btn btn-primary" onclick="addBook()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Member -->
+<div class="overlay" id="modal-add-member">
+  <div class="modal">
+    <h3>Tambah Anggota Baru</h3>
+    <div class="form-group"><label>NAMA LENGKAP</label><input id="m-name" placeholder="Nama lengkap"></div>
+    <div class="form-group"><label>EMAIL</label><input id="m-email" type="email" placeholder="email@example.com"></div>
+    <div class="form-group"><label>NOMOR TELEPON</label><input id="m-phone" placeholder="08xx..."></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-member')">Batal</button>
+      <button class="btn btn-primary" onclick="addMember()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Loan -->
+<div class="overlay" id="modal-add-loan">
+  <div class="modal">
+    <h3>Pinjam Buku</h3>
+    <div class="form-group"><label>PILIH BUKU</label><select id="l-book"></select></div>
+    <div class="form-group"><label>PILIH ANGGOTA</label><select id="l-member"></select></div>
+    <div class="form-group"><label>DURASI PEMINJAMAN (HARI)</label><input id="l-days" type="number" min="1" max="30" value="7"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-loan')">Batal</button>
+      <button class="btn btn-primary" onclick="addLoan()">Pinjam</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:5000/api';
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  loadPage(name);
+}
+
+function loadPage(name) {
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'books')     loadBooks();
+  if (name === 'members')   loadMembers();
+  if (name === 'loans')     loadLoans();
+}
+
+function loadAll() { loadDashboard(); }
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan');
+  return data;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  el.className = 'toast ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-add-loan') populateLoanSelects();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [books, members, loans] = await Promise.all([
+      api('/books'), api('/members'), api('/loans')
+    ]);
+    document.getElementById('stat-books').textContent = books.length;
+    document.getElementById('stat-members').textContent = members.length;
+    const active = loans.filter(l => l.status === 'active').length;
+    document.getElementById('stat-loans').textContent = active;
+    renderDashboardBooks(books.slice(0, 5));
+  } catch(e) { toast('Gagal memuat data: ' + e.message, 'error'); }
+}
+
+function renderDashboardBooks(books) {
+  const el = document.getElementById('dashboard-books');
+  if (!books.length) { el.innerHTML = emptyState('Belum ada buku'); return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>Judul</th><th>Penulis</th><th>ISBN</th><th>Stok</th></tr></thead>
+    <tbody>${books.map(b => `
+    <tr>
+      <td><strong>${b.title}</strong></td>
+      <td style="color:var(--muted)">${b.author}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--muted)">${b.isbn}</td>
+      <td>${stockBadge(b.stock)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ─── BOOKS ────────────────────────────────────────────────────────────────────
+async function loadBooks() {
+  const el = document.getElementById('books-table');
+  el.innerHTML = '<div class="loading">Memuat data...</div>';
+  try {
+    const books = await api('/books');
+    if (!books.length) { el.innerHTML = emptyState('Belum ada buku terdaftar'); return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>#</th><th>Judul & Penulis</th><th>ISBN</th><th>Stok</th><th>Aksi</th></tr></thead>
+      <tbody>${books.map(b => `
+      <tr>
+        <td style="color:var(--muted);font-size:13px">${b.id}</td>
+        <td>
+          <div style="font-weight:600">${b.title}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${b.author}</div>
+        </td>
+        <td style="font-family:monospace;font-size:12px;color:var(--muted)">${b.isbn}</td>
+        <td>${stockBadge(b.stock)}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteBook(${b.id})">Hapus</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = emptyState('Gagal memuat: ' + e.message); }
+}
+
+async function addBook() {
+  const title  = document.getElementById('b-title').value.trim();
+  const author = document.getElementById('b-author').value.trim();
+  const isbn   = document.getElementById('b-isbn').value.trim();
+  const stock  = parseInt(document.getElementById('b-stock').value);
+  if (!title || !author || !isbn) { toast('Semua field wajib diisi', 'error'); return; }
+  try {
+    await api('/books', 'POST', { title, author, isbn, stock });
+    toast('Buku berhasil ditambahkan!');
+    closeModal('modal-add-book');
+    document.getElementById('b-title').value = '';
+    document.getElementById('b-author').value = '';
+    document.getElementById('b-isbn').value = '';
+    document.getElementById('b-stock').value = '1';
+    loadBooks();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteBook(id) {
+  if (!confirm('Hapus buku ini?')) return;
+  try {
+    await api('/books/' + id, 'DELETE');
+    toast('Buku berhasil dihapus');
+    loadBooks();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ─── MEMBERS ──────────────────────────────────────────────────────────────────
+async function loadMembers() {
+  const el = document.getElementById('members-table');
+  el.innerHTML = '<div class="loading">Memuat data...</div>';
+  try {
+    const members = await api('/members');
+    if (!members.length) { el.innerHTML = emptyState('Belum ada anggota terdaftar'); return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>#</th><th>Nama</th><th>Email</th><th>Telepon</th><th>Aksi</th></tr></thead>
+      <tbody>${members.map(m => `
+      <tr>
+        <td style="color:var(--muted);font-size:13px">${m.id}</td>
+        <td><strong>${m.name}</strong></td>
+        <td style="color:var(--muted)">${m.email}</td>
+        <td style="color:var(--muted)">${m.phone || '—'}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">Hapus</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = emptyState('Gagal memuat: ' + e.message); }
+}
+
+async function addMember() {
+  const name  = document.getElementById('m-name').value.trim();
+  const email = document.getElementById('m-email').value.trim();
+  const phone = document.getElementById('m-phone').value.trim();
+  if (!name || !email) { toast('Nama dan email wajib diisi', 'error'); return; }
+  try {
+    await api('/members', 'POST', { name, email, phone: phone || null });
+    toast('Anggota berhasil ditambahkan!');
+    closeModal('modal-add-member');
+    document.getElementById('m-name').value = '';
+    document.getElementById('m-email').value = '';
+    document.getElementById('m-phone').value = '';
+    loadMembers();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteMember(id) {
+  if (!confirm('Hapus anggota ini?')) return;
+  try {
+    await api('/members/' + id, 'DELETE');
+    toast('Anggota berhasil dihapus');
+    loadMembers();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ─── LOANS ────────────────────────────────────────────────────────────────────
+async function loadLoans() {
+  const el = document.getElementById('loans-table');
+  el.innerHTML = '<div class="loading">Memuat data...</div>';
+  try {
+    const [loans, books, members] = await Promise.all([
+      api('/loans'), api('/books'), api('/members')
+    ]);
+    const bMap = Object.fromEntries(books.map(b => [b.id, b]));
+    const mMap = Object.fromEntries(members.map(m => [m.id, m]));
+    if (!loans.length) { el.innerHTML = emptyState('Belum ada transaksi peminjaman'); return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>#</th><th>Buku</th><th>Anggota</th><th>Tgl Pinjam</th><th>Jatuh Tempo</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody>${loans.map(l => {
+        const book   = bMap[l.book_id]   || { title: 'Unknown' };
+        const member = mMap[l.member_id] || { name: 'Unknown' };
+        const isActive = l.status === 'active';
+        const overdue = isActive && new Date(l.due_date) < new Date();
+        return `<tr>
+          <td style="color:var(--muted);font-size:13px">${l.id}</td>
+          <td><strong>${book.title}</strong></td>
+          <td style="color:var(--muted)">${member.name}</td>
+          <td style="font-size:13px;color:var(--muted)">${l.loan_date}</td>
+          <td style="font-size:13px;color:${overdue ? 'var(--red)' : 'var(--muted)'}">${l.due_date}</td>
+          <td>${statusBadge(l.status, overdue)}</td>
+          <td>${isActive
+            ? `<button class="btn btn-ghost btn-sm" onclick="returnBook(${l.id})">↩ Kembalikan</button>`
+            : `<span style="color:var(--muted);font-size:12px">${l.return_date || ''}</span>`
+          }</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = emptyState('Gagal memuat: ' + e.message); }
+}
+
+async function populateLoanSelects() {
+  const [books, members] = await Promise.all([api('/books'), api('/members')]);
+  const bs = document.getElementById('l-book');
+  const ms = document.getElementById('l-member');
+  bs.innerHTML = books.filter(b => b.stock > 0).map(b =>
+    `<option value="${b.id}">${b.title} (stok: ${b.stock})</option>`).join('');
+  ms.innerHTML = members.map(m =>
+    `<option value="${m.id}">${m.name}</option>`).join('');
+}
+
+async function addLoan() {
+  const book_id   = parseInt(document.getElementById('l-book').value);
+  const member_id = parseInt(document.getElementById('l-member').value);
+  const loan_days = parseInt(document.getElementById('l-days').value);
+  try {
+    await api('/loans', 'POST', { book_id, member_id, loan_days });
+    toast('Peminjaman berhasil dicatat!');
+    closeModal('modal-add-loan');
+    loadLoans();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function returnBook(id) {
+  try {
+    const res = await api('/loans/' + id + '/return', 'POST');
+    const fine = res.fine;
+    if (fine > 0) {
+      toast(`Buku dikembalikan. Denda: Rp${fine.toLocaleString('id-ID')}`, 'error');
+    } else {
+      toast('Buku berhasil dikembalikan!');
+    }
+    loadLoans();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function stockBadge(stock) {
+  if (stock === 0) return `<span class="badge badge-red">Habis</span>`;
+  if (stock <= 2)  return `<span class="badge badge-gold">⚠ ${stock}</span>`;
+  return `<span class="badge badge-green">${stock} tersedia</span>`;
+}
+
+function statusBadge(status, overdue) {
+  if (status === 'returned') return `<span class="badge badge-blue">✓ Dikembalikan</span>`;
+  if (overdue) return `<span class="badge badge-red">⚠ Terlambat</span>`;
+  return `<span class="badge badge-green">● Aktif</span>`;
+}
+
+function emptyState(msg) {
+  return `<div class="empty-state"><div class="emoji">📭</div><p>${msg}</p></div>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
