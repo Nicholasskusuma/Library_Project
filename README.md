@@ -1,149 +1,65 @@
-# 📚 Library Management System
+# Library Management System
 
-Aplikasi REST API sederhana untuk manajemen perpustakaan, dibangun dengan Python (Flask) dan SQLite. Mencakup manajemen buku, anggota, peminjaman, dan kalkulasi denda otomatis.
+Aplikasi ini saya buat untuk mengelola data perpustakaan secara sederhana. 
+Fitur utamanya mencakup pengelolaan buku, anggota, peminjaman, dan 
+pengembalian buku. Kalau ada buku yang dikembalikan terlambat, 
+sistem otomatis menghitung denda Rp1.000 per hari.
 
----
-
-## Fitur Utama
-
-| Fitur | Deskripsi |
-|---|---|
-| **Manajemen Buku** | Tambah, lihat, update, dan hapus data buku beserta stok |
-| **Manajemen Anggota** | Registrasi dan kelola data anggota perpustakaan |
-| **Peminjaman & Pengembalian** | Catat transaksi peminjaman, update stok otomatis |
-| **Kalkulasi Denda** | Hitung denda keterlambatan (Rp 1.000/hari) secara otomatis |
+Dibangun dengan Python (Flask) dan SQLite.
 
 ---
 
-## 🚀 Cara Menjalankan Aplikasi
+## Cara Menjalankan Aplikasi
 
-### Prasyarat
-- Python 3.11+
-
-### Langkah
+Pastikan Python 3.9+ sudah terinstall.
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/<username>/library_project.git
-cd library_project
+# Clone repository
+git clone https://github.com/Nicholasskusuma/Library_Project.git
+cd Library_Project
 
-# 2. Buat virtual environment
-python -m venv venv
-source venv/bin/activate        # Linux / macOS
-# venv\Scripts\activate         # Windows
+# Buat virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# 4. Jalankan server
+# Jalankan server
 flask --app "app:create_app()" run
 ```
 
-Server berjalan di `http://127.0.0.1:5000`.
-
-### Contoh Request
-
-```bash
-# Tambah buku
-curl -X POST http://localhost:5000/api/books \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Clean Code","author":"Robert Martin","isbn":"9780132350884"}'
-
-# Tambah anggota
-curl -X POST http://localhost:5000/api/members \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Budi","email":"budi@example.com"}'
-
-# Buat pinjaman (7 hari)
-curl -X POST http://localhost:5000/api/loans \
-  -H "Content-Type: application/json" \
-  -d '{"book_id":1,"member_id":1,"loan_days":7}'
-
-# Kembalikan buku
-curl -X POST http://localhost:5000/api/loans/1/return
-
-# Cek denda
-curl http://localhost:5000/api/loans/1/fine
-```
+Server akan berjalan di `http://127.0.0.1:5000`.
 
 ---
 
-## 🧪 Cara Menjalankan Test
+## Cara Menjalankan Test
 
 ```bash
-# Jalankan semua test dengan laporan coverage
+# Jalankan semua test sekaligus dengan laporan coverage
 pytest tests/ --cov=app --cov-report=term-missing -v
+```
 
-# Hanya unit test
+Kalau mau jalankan secara terpisah:
+
+```bash
 pytest tests/test_unit.py -v
-
-# Hanya integration test
 pytest tests/test_integration.py -v
 ```
 
-### Ringkasan Test
-
-| Jenis | File | Jumlah |
-|---|---|---|
-| Unit Test | `tests/test_unit.py` | 26 test case |
-| Integration Test | `tests/test_integration.py` | 15 test case |
-| **Total** | | **41 test case** |
-
 ---
 
-## 🔬 Strategi Pengujian
+## Strategi Pengujian
 
-### 1. Unit Testing
-Menguji komponen terkecil secara terisolasi tanpa ketergantungan eksternal:
-- **Validasi ISBN** – format 10/13 digit, dengan/tanpa tanda hubung
-- **Validasi email & nomor telepon** – format yang benar dan salah
-- **Logika denda** – perhitungan hari keterlambatan × tarif, dengan return date maupun tanpa
-- **`is_overdue()`** – kondisi tepat waktu vs terlambat
-- **`to_dict()`** – serialisasi model ke dictionary
+Pengujian dibagi jadi dua lapisan.
 
-### 2. Integration Testing
-Menguji interaksi antar komponen (endpoint → service → database):
-- **CRUD Buku & Anggota** – tambah, baca, update, hapus via HTTP
-- **Validasi input di endpoint** – field kosong, ISBN duplikat, email duplikat
-- **Alur peminjaman end-to-end** – pinjam → cek stok → kembalikan → cek stok normal kembali
-- **Error handling** – buku habis, buku/anggota tidak ditemukan, pengembalian ganda
-- **Endpoint denda** – kalkulasi denda melalui API
+**Unit Test (26 test case)** — menguji fungsi-fungsi kecil secara 
+terisolasi, seperti validasi format ISBN, validasi email dan nomor 
+telepon, serta perhitungan denda keterlambatan.
 
-### 3. Coverage Target
-Target minimal **60% coverage** (aktual biasanya 80%+).
+**Integration Test (15 test case)** — menguji alur yang lebih lengkap 
+melibatkan database dan HTTP request, seperti proses peminjaman buku 
+dari awal sampai pengembalian, termasuk kasus-kasus error seperti 
+buku habis stok atau anggota tidak ditemukan.
 
----
-
-## CI/CD – GitHub Actions
-
-Pipeline berjalan otomatis pada setiap **push** dan **pull request** ke semua branch.
-
-**Langkah pipeline:**
-1. Checkout kode
-2. Setup Python 3.11
-3. Install dependencies (`pip install -r requirements.txt`)
-4. Jalankan seluruh test + generate laporan coverage (`pytest --cov`)
-5. Upload `coverage.xml` sebagai artifact
-
-Lihat konfigurasi di `.github/workflows/ci.yml`.
-
----
-
-## 🏗️ Struktur Repository
-
-```
-library_project/
-├── .github/
-│   └── workflows/
-│       └── ci.yml          # Konfigurasi GitHub Actions
-├── app/
-│   ├── __init__.py         # App factory (create_app)
-│   ├── models.py           # Model: Book, Member, Loan
-│   └── routes.py           # Blueprint endpoint REST API
-├── tests/
-│   ├── test_unit.py        # 26 unit test
-│   └── test_integration.py # 15 integration test
-├── .gitignore
-├── README.md
-└── requirements.txt
-```
+Total coverage yang dicapai 94%, diukur menggunakan pytest-cov.
