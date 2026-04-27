@@ -501,6 +501,30 @@
   </div>
 </div>
 
+<!-- Edit Stock -->
+<div class="overlay" id="modal-edit-stock">
+  <div class="modal">
+    <h3>Edit Stok Buku</h3>
+    <div style="background:var(--surface);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+      <div id="edit-book-title" style="font-weight:600;font-size:15px;margin-bottom:4px;"></div>
+      <div id="edit-book-author" style="font-size:13px;color:var(--muted);"></div>
+    </div>
+    <div class="form-group">
+      <label>STOK SAAT INI</label>
+      <input id="e-stock-current" disabled style="opacity:.5;cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label>STOK BARU</label>
+      <input id="e-stock" type="number" min="0" placeholder="Masukkan jumlah stok baru">
+    </div>
+    <input type="hidden" id="e-book-id">
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-stock')">Batal</button>
+      <button class="btn btn-primary" onclick="updateStock()">Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add Loan -->
 <div class="overlay" id="modal-add-loan">
   <div class="modal">
@@ -615,7 +639,8 @@ async function loadBooks() {
         </td>
         <td style="font-family:monospace;font-size:12px;color:var(--muted)">${b.isbn}</td>
         <td>${stockBadge(b.stock)}</td>
-        <td>
+        <td style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="openEditStock(${b.id},'${b.title.replace(/'/g,"\\'")}','${b.author.replace(/'/g,"\\'")}',${b.stock})">✏ Edit Stok</button>
           <button class="btn btn-danger btn-sm" onclick="deleteBook(${b.id})">Hapus</button>
         </td>
       </tr>`).join('')}</tbody>
@@ -638,6 +663,28 @@ async function addBook() {
     document.getElementById('b-isbn').value = '';
     document.getElementById('b-stock').value = '1';
     loadBooks();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openEditStock(id, title, author, currentStock) {
+  document.getElementById('e-book-id').value = id;
+  document.getElementById('edit-book-title').textContent = title;
+  document.getElementById('edit-book-author').textContent = author;
+  document.getElementById('e-stock-current').value = currentStock + ' buku';
+  document.getElementById('e-stock').value = currentStock;
+  openModal('modal-edit-stock');
+}
+
+async function updateStock() {
+  const id    = document.getElementById('e-book-id').value;
+  const stock = parseInt(document.getElementById('e-stock').value);
+  if (isNaN(stock) || stock < 0) { toast('Stok harus angka 0 atau lebih', 'error'); return; }
+  try {
+    await api('/books/' + id, 'PUT', { stock });
+    toast('Stok berhasil diperbarui!');
+    closeModal('modal-edit-stock');
+    loadBooks();
+    loadDashboard();
   } catch(e) { toast(e.message, 'error'); }
 }
 
