@@ -1,15 +1,14 @@
 """
-Unit Tests – Library Management System
+Unit Tests Library Management System
 Menguji logika bisnis, validasi input, dan kalkulasi denda.
 """
 import pytest
 from datetime import date, timedelta
-from unittest.mock import MagicMock
 from app import create_app, db
 from app.models import Book, Member, Loan
 
 
-# ─── FIXTURES ────────────────────────────────────────────────────────────────
+# ─── FIXTURES ────── persiapan data sebelum test jalan
 
 @pytest.fixture
 def app():
@@ -42,7 +41,7 @@ def sample_member(app):
         return member.id
 
 
-# ─── BOOK MODEL TESTS ────────────────────────────────────────────────────────
+# ─── BOOK MODEL TESTS ──────── test semua hal yang berhubungan dengan validasi dan data buku
 
 class TestBookValidation:
     def test_validate_isbn_10_digits_valid(self):
@@ -82,7 +81,7 @@ class TestBookValidation:
             assert d['stock'] == 3
 
 
-# ─── MEMBER MODEL TESTS ──────────────────────────────────────────────────────
+# ─── MEMBER MODEL TESTS ─────── test semua hal yang berhubungan dengan validasi dan data anggota
 
 class TestMemberValidation:
     def test_validate_email_valid(self):
@@ -114,7 +113,7 @@ class TestMemberValidation:
             assert d['email'] == 'budi@example.com'
 
 
-# ─── LOAN MODEL TESTS ────────────────────────────────────────────────────────
+# ─── LOAN MODEL TESTS ────────  test logika peminjaman, pengembalian, dan kalkulasi denda
 
 class TestLoanLogic:
     def _make_loan(self, app, book_id, member_id, days_ago=0, overdue_by=0):
