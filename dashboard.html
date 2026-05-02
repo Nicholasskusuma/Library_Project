@@ -381,6 +381,9 @@
     <button class="nav-item" onclick="showPage('loans')">
       <span class="icon">🔄</span> Peminjaman
     </button>
+    <button class="nav-item" onclick="showPage('fines')">
+      <span class="icon">💰</span> Denda
+    </button>
   </nav>
 </aside>
 
@@ -466,6 +469,34 @@
     </div>
   </div>
 
+  <!-- FINES PAGE -->
+  <div class="page" id="page-fines">
+    <div class="page-header">
+      <div>
+        <h2>Denda</h2>
+        <p>Daftar peminjaman yang melewati jatuh tempo</p>
+      </div>
+      <button class="btn btn-ghost" onclick="loadFines()">↻ Refresh</button>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="stat-card" style="border-color:rgba(247,111,111,.3)">
+        <div class="stat-label">Total Peminjam Kena Denda</div>
+        <div class="stat-value" id="stat-fined" style="color:var(--red)">—</div>
+        <div class="stat-sub">orang</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(232,169,77,.3)">
+        <div class="stat-label">Total Denda Belum Dibayar</div>
+        <div class="stat-value" id="stat-total-fine" style="color:var(--accent2);font-size:26px">—</div>
+        <div class="stat-sub">akumulasi denda aktif</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><h3>⚠ Peminjam yang Kena Denda</h3></div>
+      <div id="fines-table"><div class="loading">Memuat data...</div></div>
+    </div>
+  </div>
+
+
 </main>
 
 <!-- MODALS -->
@@ -497,30 +528,6 @@
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-add-member')">Batal</button>
       <button class="btn btn-primary" onclick="addMember()">Simpan</button>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Stock -->
-<div class="overlay" id="modal-edit-stock">
-  <div class="modal">
-    <h3>Edit Stok Buku</h3>
-    <div style="background:var(--surface);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
-      <div id="edit-book-title" style="font-weight:600;font-size:15px;margin-bottom:4px;"></div>
-      <div id="edit-book-author" style="font-size:13px;color:var(--muted);"></div>
-    </div>
-    <div class="form-group">
-      <label>STOK SAAT INI</label>
-      <input id="e-stock-current" disabled style="opacity:.5;cursor:not-allowed;">
-    </div>
-    <div class="form-group">
-      <label>STOK BARU</label>
-      <input id="e-stock" type="number" min="0" placeholder="Masukkan jumlah stok baru">
-    </div>
-    <input type="hidden" id="e-book-id">
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-edit-stock')">Batal</button>
-      <button class="btn btn-primary" onclick="updateStock()">Simpan</button>
     </div>
   </div>
 </div>
@@ -559,6 +566,7 @@ function loadPage(name) {
   if (name === 'books')     loadBooks();
   if (name === 'members')   loadMembers();
   if (name === 'loans')     loadLoans();
+  if (name === 'fines')     loadFines();
 }
 
 function loadAll() { loadDashboard(); }
@@ -639,8 +647,7 @@ async function loadBooks() {
         </td>
         <td style="font-family:monospace;font-size:12px;color:var(--muted)">${b.isbn}</td>
         <td>${stockBadge(b.stock)}</td>
-        <td style="display:flex;gap:8px;align-items:center;">
-          <button class="btn btn-ghost btn-sm" onclick="openEditStock(${b.id},'${b.title.replace(/'/g,"\\'")}','${b.author.replace(/'/g,"\\'")}',${b.stock})">✏ Edit Stok</button>
+        <td>
           <button class="btn btn-danger btn-sm" onclick="deleteBook(${b.id})">Hapus</button>
         </td>
       </tr>`).join('')}</tbody>
@@ -663,28 +670,6 @@ async function addBook() {
     document.getElementById('b-isbn').value = '';
     document.getElementById('b-stock').value = '1';
     loadBooks();
-  } catch(e) { toast(e.message, 'error'); }
-}
-
-function openEditStock(id, title, author, currentStock) {
-  document.getElementById('e-book-id').value = id;
-  document.getElementById('edit-book-title').textContent = title;
-  document.getElementById('edit-book-author').textContent = author;
-  document.getElementById('e-stock-current').value = currentStock + ' buku';
-  document.getElementById('e-stock').value = currentStock;
-  openModal('modal-edit-stock');
-}
-
-async function updateStock() {
-  const id    = document.getElementById('e-book-id').value;
-  const stock = parseInt(document.getElementById('e-stock').value);
-  if (isNaN(stock) || stock < 0) { toast('Stok harus angka 0 atau lebih', 'error'); return; }
-  try {
-    await api('/books/' + id, 'PUT', { stock });
-    toast('Stok berhasil diperbarui!');
-    closeModal('modal-edit-stock');
-    loadBooks();
-    loadDashboard();
   } catch(e) { toast(e.message, 'error'); }
 }
 
@@ -830,6 +815,57 @@ function statusBadge(status, overdue) {
 
 function emptyState(msg) {
   return `<div class="empty-state"><div class="emoji">📭</div><p>${msg}</p></div>`;
+}
+
+
+// ─── FINES ────────────────────────────────────────────────────────────────────
+async function loadFines() {
+  const el = document.getElementById('fines-table');
+  el.innerHTML = '<div class="loading">Memuat data...</div>';
+  try {
+    const [loans, books, members] = await Promise.all([
+      api('/loans'), api('/books'), api('/members')
+    ]);
+    const bMap = Object.fromEntries(books.map(b => [b.id, b]));
+    const mMap = Object.fromEntries(members.map(m => [m.id, m]));
+
+    const today = new Date();
+    const overdue = loans.filter(l => {
+      if (l.status !== 'active') return false;
+      return new Date(l.due_date) < today;
+    });
+
+    document.getElementById('stat-fined').textContent = overdue.length;
+
+    let totalFine = 0;
+    const rows = overdue.map(l => {
+      const book   = bMap[l.book_id]   || { title: 'Unknown' };
+      const member = mMap[l.member_id] || { name: 'Unknown' };
+      const daysLate = Math.floor((today - new Date(l.due_date)) / (1000*60*60*24));
+      const fine = daysLate * 1000;
+      totalFine += fine;
+      return `<tr>
+        <td><strong>${member.name}</strong><div style="font-size:12px;color:var(--muted)">${member.email}</div></td>
+        <td>${book.title}</td>
+        <td style="color:var(--muted);font-size:13px">${l.due_date}</td>
+        <td><span class="badge badge-red">⚠ ${daysLate} hari</span></td>
+        <td><span style="color:var(--red);font-weight:700">Rp${fine.toLocaleString('id-ID')}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="returnBook(${l.id})">↩ Kembalikan</button></td>
+      </tr>`;
+    });
+
+    document.getElementById('stat-total-fine').textContent = 'Rp' + totalFine.toLocaleString('id-ID');
+
+    if (!overdue.length) {
+      el.innerHTML = '<div class="empty-state"><div class="emoji">🎉</div><p>Tidak ada peminjam yang kena denda</p></div>';
+      return;
+    }
+
+    el.innerHTML = `<table>
+      <thead><tr><th>Anggota</th><th>Buku</th><th>Jatuh Tempo</th><th>Keterlambatan</th><th>Denda</th><th>Aksi</th></tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = '<div class="empty-state"><p>Gagal memuat: ' + e.message + '</p></div>'; }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
