@@ -229,4 +229,4 @@ class TestLoanLogic:
             )
             db.session.add(loan)
             db.session.commit()
-            assert loan.calculate_fine(fine_per_day=1000) == 2 * 1000
+            assert loan.calculate_fine(fine_per_day=500) == 2 * 500
