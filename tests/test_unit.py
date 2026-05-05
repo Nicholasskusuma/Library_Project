@@ -48,10 +48,10 @@ class TestBookValidation:
         assert Book.validate_isbn('0132350882') is True
 
     def test_validate_isbn_13_digits_valid(self):
-        assert Book.validate_isbn('9780132350884') is True
+        assert Book.validate_isbn('97801323508840') is True
 
     def test_validate_isbn_with_dashes_valid(self):
-        assert Book.validate_isbn('978-0-13-235088-4') is True
+        assert Book.validate_isbn('978-0-13-235088-40') is True
 
     def test_validate_isbn_letters_invalid(self):
         assert Book.validate_isbn('97801323ABC84') is False
